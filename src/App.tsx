@@ -7,7 +7,6 @@ import HeroSection from './components/HeroSection';
 import MenuSection from './components/MenuSection';
 import CartDrawer from './components/CartDrawer';
 import MapSection from './components/MapSection';
-import ReviewSection from './components/ReviewSection';
 import ChatWidget from './components/ChatWidget';
 import AdminPanel from './components/AdminPanel';
 import { Volume2, ShieldAlert, Sparkles, AlertCircle } from 'lucide-react';
@@ -146,6 +145,30 @@ export default function App() {
     return local ? JSON.parse(local) : seedReviews;
   });
 
+  const [categoryNames, setCategoryNames] = useState<Record<string, { en: string; vi: string; tl: string }>>(() => {
+    const local = localStorage.getItem('vb_category_names');
+    if (local) return JSON.parse(local);
+    return {
+      pho: { en: "Pho (Noodle Soup)", vi: "Phở truyền thống", tl: "Pho (Noodle Soup)" },
+      banhmi: { en: "Banh Mi (Baguettes)", vi: "Bánh mì Việt Nam", tl: "Banh Mi (Baguettes)" },
+      buncha: { en: "Bun Cha & Bowls", vi: "Bún chả & Bún trộn", tl: "Bun Cha at Bowls" },
+      springrolls: { en: "Spring Rolls", vi: "Nem cuốn & Nem rán", tl: "Spring Rolls" },
+      drinks: { en: "Drinks & Coffee", vi: "Thức uống & Cà phê", tl: "Mga Inumin at Kape" },
+      desserts: { en: "Desserts", vi: "Món tráng miệng", tl: "Panghimagas" }
+    };
+  });
+
+  const [bannerImages, setBannerImages] = useState<string[]>(() => {
+    const local = localStorage.getItem('vb_banner_images');
+    if (local) return JSON.parse(local);
+    return [
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=1600&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1600454021970-351feb2a5149?w=1600&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=1600&auto=format&fit=crop&q=80"
+    ];
+  });
+
   // Push Alert Notification for new orders
   const [alertNotify, setAlertNotify] = useState<string | null>(null);
 
@@ -169,6 +192,14 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('vb_reviews', JSON.stringify(reviews));
   }, [reviews]);
+
+  useEffect(() => {
+    localStorage.setItem('vb_category_names', JSON.stringify(categoryNames));
+  }, [categoryNames]);
+
+  useEffect(() => {
+    localStorage.setItem('vb_banner_images', JSON.stringify(bannerImages));
+  }, [bannerImages]);
 
   const dict = translations[language];
 
@@ -287,6 +318,10 @@ export default function App() {
             onUpdateMenu={setMenuItems}
             onUpdateOrders={setOrders}
             onUpdateReviews={setReviews}
+            categoryNames={categoryNames}
+            onUpdateCategoryNames={setCategoryNames}
+            bannerImages={bannerImages}
+            onUpdateBannerImages={setBannerImages}
           />
         ) : (
           /* Normal User Portal */
@@ -295,7 +330,7 @@ export default function App() {
             {/* Show section conditional components */}
             {activeSection === 'home' && (
               <>
-                <HeroSection dict={dict} onExploreMenu={handleExplore} />
+                <HeroSection dict={dict} onExploreMenu={handleExplore} bannerImages={bannerImages} />
                 <MenuSection
                   menuItems={menuItems}
                   currentLanguage={language}
@@ -303,14 +338,9 @@ export default function App() {
                   favorites={favorites}
                   onToggleFavorite={handleToggleFavorite}
                   onAddToCart={handleAddToCart}
+                  categoryNames={categoryNames}
                 />
                 <MapSection dict={dict} />
-                <ReviewSection
-                  reviews={reviews}
-                  currentLanguage={language}
-                  dict={dict}
-                  onAddReview={handleAddReview}
-                />
               </>
             )}
 
@@ -334,17 +364,7 @@ export default function App() {
                   favorites={favorites}
                   onToggleFavorite={handleToggleFavorite}
                   onAddToCart={handleAddToCart}
-                />
-              </div>
-            )}
-
-            {activeSection === 'reviews' && (
-              <div className="py-6">
-                <ReviewSection
-                  reviews={reviews}
-                  currentLanguage={language}
-                  dict={dict}
-                  onAddReview={handleAddReview}
+                  categoryNames={categoryNames}
                 />
               </div>
             )}
@@ -397,7 +417,6 @@ export default function App() {
             <ul className="space-y-2 text-xs">
               <li><button onClick={() => { setActiveSection('home'); setIsAdminPanelOpen(false); }} className="hover:text-emerald-400 cursor-pointer">{dict.home}</button></li>
               <li><button onClick={() => { setActiveSection('menu'); setIsAdminPanelOpen(false); }} className="hover:text-emerald-400 cursor-pointer">{dict.menu}</button></li>
-              <li><button onClick={() => { setActiveSection('reviews'); setIsAdminPanelOpen(false); }} className="hover:text-emerald-400 cursor-pointer">{dict.reviews}</button></li>
               <li><button onClick={() => { setActiveSection('location'); setIsAdminPanelOpen(false); }} className="hover:text-emerald-400 cursor-pointer">{dict.location}</button></li>
             </ul>
           </div>

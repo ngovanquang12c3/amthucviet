@@ -34,7 +34,6 @@ export default function Navbar({
   const sections = [
     { id: 'home', label: dict.home },
     { id: 'menu', label: dict.menu },
-    { id: 'reviews', label: dict.reviews },
     { id: 'location', label: dict.location }
   ];
 

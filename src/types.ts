@@ -7,7 +7,7 @@ export interface MenuItem {
   nameTl: string;
   price: number; // in PHP
   originalPrice?: number; // for discounts
-  category: 'pho' | 'banhmi' | 'buncha' | 'springrolls' | 'drinks' | 'desserts';
+  category: string;
   image: string;
   descriptionEn: string;
   descriptionVi: string;

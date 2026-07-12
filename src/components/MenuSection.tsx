@@ -9,6 +9,7 @@ interface MenuSectionProps {
   favorites: string[];
   onToggleFavorite: (id: string) => void;
   onAddToCart: (id: string, qty: number, notes?: string) => void;
+  categoryNames?: Record<string, { en: string; vi: string; tl: string }>;
 }
 
 export default function MenuSection({
@@ -17,7 +18,8 @@ export default function MenuSection({
   dict,
   favorites,
   onToggleFavorite,
-  onAddToCart
+  onAddToCart,
+  categoryNames
 }: MenuSectionProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -26,14 +28,21 @@ export default function MenuSection({
   const [dishQty, setDishQty] = useState(1);
   const [addedItemAlert, setAddedItemAlert] = useState<string | null>(null);
 
+  // Extract all unique categories from menu items
+  const uniqueCategories = Array.from(new Set(menuItems.map(item => item.category)));
+
   const categories = [
     { id: 'all', label: dict.all },
-    { id: 'pho', label: dict.pho },
-    { id: 'banhmi', label: dict.banhmi },
-    { id: 'buncha', label: dict.buncha },
-    { id: 'springrolls', label: dict.springrolls },
-    { id: 'drinks', label: dict.drinks },
-    { id: 'desserts', label: dict.desserts }
+    ...Object.entries(categoryNames || {}).map(([id, langs]) => ({
+      id,
+      label: langs[currentLanguage] || (dict as any)[id] || id
+    })),
+    ...uniqueCategories
+      .filter(cat => !Object.keys(categoryNames || {}).includes(cat))
+      .map(cat => ({
+        id: cat,
+        label: (dict as any)[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1))
+      }))
   ];
 
   // Filter items based on category and search query
@@ -162,7 +171,7 @@ export default function MenuSection({
                   
                   {/* Category badge */}
                   <div className="absolute top-3 left-3 rounded-md bg-white/90 backdrop-blur-xs px-2.5 py-1 text-[10px] font-extrabold tracking-wide uppercase text-emerald-800 shadow-xs">
-                    {item.category}
+                    {categories.find(c => c.id === item.category)?.label || item.category}
                   </div>
 
                   {/* Favorite Toggle button */}
@@ -206,11 +215,8 @@ export default function MenuSection({
 
                   {/* Rating Log */}
                   <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <span className="text-amber-400 font-bold">★ {item.rating.toFixed(1)}</span>
-                    <span>({item.reviewsCount} reviews)</span>
-                    <span className="mx-1 text-gray-300">•</span>
-                    <div className="flex items-center gap-0.5 text-gray-400">
-                      <Clock className="h-3 w-3" />
+                    <div className="flex items-center gap-1 text-gray-500 font-semibold">
+                      <Clock className="h-3.5 w-3.5 text-emerald-600" />
                       <span>{item.preparationTime} {dict.mins}</span>
                     </div>
                   </div>

@@ -12,6 +12,10 @@ interface AdminPanelProps {
   onUpdateMenu: (updated: MenuItem[]) => void;
   onUpdateOrders: (updated: Order[]) => void;
   onUpdateReviews: (updated: Review[]) => void;
+  categoryNames?: Record<string, { en: string; vi: string; tl: string }>;
+  onUpdateCategoryNames?: (updated: Record<string, { en: string; vi: string; tl: string }>) => void;
+  bannerImages?: string[];
+  onUpdateBannerImages?: (updated: string[]) => void;
 }
 
 export default function AdminPanel({
@@ -22,10 +26,24 @@ export default function AdminPanel({
   currentLanguage,
   onUpdateMenu,
   onUpdateOrders,
-  onUpdateReviews
+  onUpdateReviews,
+  categoryNames,
+  onUpdateCategoryNames,
+  bannerImages = [],
+  onUpdateBannerImages
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<'stats' | 'orders' | 'menu' | 'reviews'>('stats');
   
+  // Category management temp state
+  const [tempCategoryNames, setTempCategoryNames] = useState<Record<string, { en: string; vi: string; tl: string }>>({});
+  const [isEditingCategories, setIsEditingCategories] = useState(false);
+  const [categorySavedAlert, setCategorySavedAlert] = useState(false);
+
+  // Banner management state
+  const [isEditingBanners, setIsEditingBanners] = useState(false);
+  const [newBannerUrl, setNewBannerUrl] = useState('');
+  const [bannerAlert, setBannerAlert] = useState<string | null>(null);
+
   // CMS Dish Form State
   const [editingDish, setEditingDish] = useState<MenuItem | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -33,7 +51,8 @@ export default function AdminPanel({
   const [dishNameVi, setDishNameVi] = useState('');
   const [dishNameTl, setDishNameTl] = useState('');
   const [dishPrice, setDishPrice] = useState(0);
-  const [dishCategory, setDishCategory] = useState<'pho' | 'banhmi' | 'buncha' | 'springrolls' | 'drinks' | 'desserts'>('pho');
+  const [dishCategory, setDishCategory] = useState<string>('pho');
+  const [customCategory, setCustomCategory] = useState('');
   const [dishDescriptionEn, setDishDescriptionEn] = useState('');
   const [dishDescriptionVi, setDishDescriptionVi] = useState('');
   const [dishDescriptionTl, setDishDescriptionTl] = useState('');
@@ -130,7 +149,16 @@ export default function AdminPanel({
     setDishNameVi(dish.nameVi || '');
     setDishNameTl(dish.nameTl || '');
     setDishPrice(dish.price);
-    setDishCategory(dish.category);
+    
+    const standardCategories = ['pho', 'banhmi', 'buncha', 'springrolls', 'drinks', 'desserts'];
+    if (standardCategories.includes(dish.category)) {
+      setDishCategory(dish.category);
+      setCustomCategory('');
+    } else {
+      setDishCategory('custom');
+      setCustomCategory(dish.category);
+    }
+    
     setDishDescriptionEn(dish.descriptionEn);
     setDishDescriptionVi(dish.descriptionVi || '');
     setDishDescriptionTl(dish.descriptionTl || '');
@@ -150,6 +178,7 @@ export default function AdminPanel({
     setDishNameTl('');
     setDishPrice(150);
     setDishCategory('pho');
+    setCustomCategory('');
     setDishDescriptionEn('');
     setDishDescriptionVi('');
     setDishDescriptionTl('');
@@ -169,6 +198,8 @@ export default function AdminPanel({
     const ingVi = dishIngredientsVi.split(",").map(i => i.trim()).filter(Boolean);
     const ingTl = dishIngredientsTl.split(",").map(i => i.trim()).filter(Boolean);
 
+    const finalCategory = (dishCategory === 'custom' ? customCategory.trim().toLowerCase().replace(/\s+/g, '') : dishCategory) || 'pho';
+
     if (isAddingNew) {
       const newDish: MenuItem = {
         id: "dish-" + Date.now(),
@@ -176,7 +207,7 @@ export default function AdminPanel({
         nameVi: dishNameVi || dishNameEn,
         nameTl: dishNameTl || dishNameEn,
         price: Number(dishPrice),
-        category: dishCategory,
+        category: finalCategory,
         image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&auto=format&fit=crop&q=80",
         descriptionEn: dishDescriptionEn,
         descriptionVi: dishDescriptionVi || dishDescriptionEn,
@@ -201,7 +232,7 @@ export default function AdminPanel({
             nameVi: dishNameVi,
             nameTl: dishNameTl,
             price: Number(dishPrice),
-            category: dishCategory,
+            category: finalCategory,
             descriptionEn: dishDescriptionEn,
             descriptionVi: dishDescriptionVi,
             descriptionTl: dishDescriptionTl,
@@ -218,8 +249,81 @@ export default function AdminPanel({
       onUpdateMenu(updated);
     }
 
+    // Auto register new custom category in categoryNames
+    if (finalCategory && categoryNames && !categoryNames[finalCategory] && onUpdateCategoryNames) {
+      const displayName = customCategory.trim() || finalCategory;
+      onUpdateCategoryNames({
+        ...categoryNames,
+        [finalCategory]: { en: displayName, vi: displayName, tl: displayName }
+      });
+    }
+
     setIsAddingNew(false);
     setEditingDish(null);
+  };
+
+  const handleOpenCategoryManager = () => {
+    if (categoryNames) {
+      const allCategoryIds = Array.from(new Set([
+        'pho', 'banhmi', 'buncha', 'springrolls', 'drinks', 'desserts',
+        ...menuItems.map(item => item.category)
+      ]));
+
+      const initialTemp: Record<string, { en: string; vi: string; tl: string }> = {};
+      allCategoryIds.forEach(id => {
+        initialTemp[id] = categoryNames[id] || {
+          en: id.charAt(0).toUpperCase() + id.slice(1),
+          vi: id.charAt(0).toUpperCase() + id.slice(1),
+          tl: id.charAt(0).toUpperCase() + id.slice(1)
+        };
+      });
+
+      setTempCategoryNames(initialTemp);
+      setIsEditingCategories(!isEditingCategories);
+    }
+  };
+
+  const handleUpdateTempCategory = (id: string, lang: 'en' | 'vi' | 'tl', value: string) => {
+    setTempCategoryNames(prev => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        [lang]: value
+      }
+    }));
+  };
+
+  const handleSaveCategories = () => {
+    if (onUpdateCategoryNames) {
+      onUpdateCategoryNames(tempCategoryNames);
+      setCategorySavedAlert(true);
+      setTimeout(() => setCategorySavedAlert(false), 4000);
+    }
+  };
+
+  const handleAddBanner = (e: React.FormEvent) => {
+    e.preventDefault();
+    const url = newBannerUrl.trim();
+    if (!url) return;
+    
+    if (onUpdateBannerImages) {
+      if (bannerImages.includes(url)) {
+        setBannerAlert("This banner image URL already exists.");
+        return;
+      }
+      onUpdateBannerImages([...bannerImages, url]);
+      setNewBannerUrl('');
+      setBannerAlert("Banner image added successfully!");
+      setTimeout(() => setBannerAlert(null), 3500);
+    }
+  };
+
+  const handleRemoveBanner = (url: string) => {
+    if (onUpdateBannerImages) {
+      onUpdateBannerImages(bannerImages.filter(img => img !== url));
+      setBannerAlert("Banner image removed.");
+      setTimeout(() => setBannerAlert(null), 3500);
+    }
   };
 
   const handleDeleteDish = (id: string) => {
@@ -463,16 +567,228 @@ export default function AdminPanel({
       {activeTab === 'menu' && (
         <div className="space-y-8 animate-in fade-in duration-200">
           
-          <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200 pb-3 gap-3">
             <h3 className="font-sans font-bold text-base text-gray-800">{dict.menuManagement}</h3>
-            <button
-              onClick={handleOpenAdd}
-              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer shadow-xs"
-            >
-              <Plus className="h-4 w-4" />
-              <span>{dict.addDish}</span>
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  setIsEditingBanners(!isEditingBanners);
+                  setIsEditingCategories(false);
+                }}
+                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                  isEditingBanners ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'
+                }`}
+              >
+                <span>🎨 {isEditingBanners ? 'Close Banner Editor' : 'Manage Banners'}</span>
+              </button>
+              <button
+                onClick={() => {
+                  handleOpenCategoryManager();
+                  setIsEditingBanners(false);
+                }}
+                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                  isEditingCategories ? 'bg-slate-900 text-white' : 'bg-slate-800 hover:bg-slate-900 text-white'
+                }`}
+              >
+                <span>📁 {isEditingCategories ? 'Close Category Editor' : 'Manage Categories'}</span>
+              </button>
+              <button
+                onClick={handleOpenAdd}
+                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer shadow-xs"
+              >
+                <Plus className="h-4 w-4" />
+                <span>{dict.addDish}</span>
+              </button>
+            </div>
           </div>
+
+          {/* Banner Slider Manager Panel */}
+          {isEditingBanners && (
+            <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm space-y-5 animate-in fade-in duration-200">
+              <div className="flex justify-between items-center border-b border-gray-100 pb-2.5">
+                <div>
+                  <h4 className="font-sans font-bold text-sm text-gray-800 uppercase tracking-wide flex items-center gap-1.5">
+                    <span>🎨 Banner Slider Manager</span>
+                  </h4>
+                  <p className="text-[11px] text-gray-500 mt-0.5">
+                    Add, view, and remove banner images displayed on the homepage. They will slide/fade automatically every 4 seconds.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingBanners(false)}
+                  className="text-gray-400 hover:text-gray-600 font-bold text-xs"
+                >
+                  Close
+                </button>
+              </div>
+
+              {bannerAlert && (
+                <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs font-bold p-3 rounded-xl flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                  <span>{bannerAlert}</span>
+                </div>
+              )}
+
+              {/* Add New Banner Form */}
+              <form onSubmit={handleAddBanner} className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
+                <label className="block text-xs font-bold text-gray-700">Add New Banner Image URL:</label>
+                <div className="flex flex-col sm:flex-row gap-2.5">
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://images.unsplash.com/photo-... or any direct image link"
+                    value={newBannerUrl}
+                    onChange={(e) => setNewBannerUrl(e.target.value)}
+                    className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 font-semibold"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-5 py-2.5 rounded-lg shrink-0 transition-all cursor-pointer shadow-xs"
+                  >
+                    + Add to Slider
+                  </button>
+                </div>
+                <p className="text-[10px] text-gray-400">
+                  Tip: Copy high-quality images from Unsplash or upload your own, then paste the direct URL link here.
+                </p>
+              </form>
+
+              {/* Current Banners Grid */}
+              <div className="space-y-3">
+                <h5 className="text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  Current Banners in Carousel ({bannerImages.length})
+                </h5>
+                
+                {bannerImages.length === 0 ? (
+                  <p className="text-xs italic text-gray-400">No banner images configured. Add at least one above!</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {bannerImages.map((img, idx) => (
+                      <div key={idx} className="relative bg-gray-50 rounded-xl overflow-hidden border border-gray-100 shadow-xs flex flex-col">
+                        <div className="aspect-[16/9] w-full bg-slate-100 relative">
+                          <img
+                            src={img}
+                            alt={`Slide preview ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                          <span className="absolute top-2 left-2 bg-black/60 text-white font-mono text-[9px] px-2 py-0.5 rounded-full font-bold">
+                            #{idx + 1}
+                          </span>
+                        </div>
+                        <div className="p-3 flex items-center justify-between gap-2 mt-auto">
+                          <p className="text-[10px] text-gray-400 font-mono truncate flex-1" title={img}>{img}</p>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveBanner(img)}
+                            className="text-rose-600 hover:text-rose-800 hover:bg-rose-50 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
+                            title="Delete banner"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Category Names Manager Panel */}
+          {isEditingCategories && (
+            <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm space-y-4 animate-in fade-in duration-200">
+              <div className="flex justify-between items-center border-b border-gray-100 pb-2.5">
+                <div>
+                  <h4 className="font-sans font-bold text-sm text-gray-800 uppercase tracking-wide">
+                    📁 Category Names Manager
+                  </h4>
+                  <p className="text-[11px] text-gray-500 mt-0.5">
+                    Edit the display names of standard and custom categories in English, Tiếng Việt, and Tagalog.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingCategories(false)}
+                  className="text-gray-400 hover:text-gray-600 font-bold text-xs"
+                >
+                  Close
+                </button>
+              </div>
+
+              {categorySavedAlert && (
+                <div className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs font-bold p-3 rounded-xl flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                  <span>Category translations saved successfully! The updates are now live.</span>
+                </div>
+              )}
+
+              <div className="space-y-3.5 max-h-[400px] overflow-y-auto pr-1">
+                <div className="hidden md:grid grid-cols-4 gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3">
+                  <div>Category Key</div>
+                  <div>English (EN)</div>
+                  <div>Vietnamese (VI)</div>
+                  <div>Tagalog (TL)</div>
+                </div>
+
+                {Object.keys(tempCategoryNames).map((id) => {
+                  const langs = tempCategoryNames[id];
+                  return (
+                    <div key={id} className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 items-center bg-gray-50 p-3.5 rounded-xl border border-gray-100">
+                      <div className="font-mono text-xs font-bold text-slate-600 uppercase tracking-wide">
+                        🏷️ {id}
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase block md:hidden mb-0.5">English</label>
+                        <input
+                          type="text"
+                          className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                          value={langs.en}
+                          onChange={(e) => handleUpdateTempCategory(id, 'en', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase block md:hidden mb-0.5">Vietnamese</label>
+                        <input
+                          type="text"
+                          className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                          value={langs.vi}
+                          onChange={(e) => handleUpdateTempCategory(id, 'vi', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase block md:hidden mb-0.5">Tagalog</label>
+                        <input
+                          type="text"
+                          className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                          value={langs.tl}
+                          onChange={(e) => handleUpdateTempCategory(id, 'tl', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleSaveCategories}
+                  className="rounded-xl bg-emerald-600 text-white font-bold text-xs px-5 py-2.5 shadow-xs hover:bg-emerald-700 cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>💾 Save Category Translations</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingCategories(false)}
+                  className="rounded-xl border border-gray-200 bg-white text-gray-600 font-bold text-xs px-5 py-2.5 hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Add / Edit Form Panel */}
           {(isAddingNew || editingDish) && (
@@ -546,15 +862,33 @@ export default function AdminPanel({
                   <select
                     value={dishCategory}
                     onChange={(e: any) => setDishCategory(e.target.value)}
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 bg-gray-50 focus:bg-white focus:outline-none cursor-pointer"
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 bg-gray-50 focus:bg-white focus:outline-none cursor-pointer mb-2"
                   >
-                    <option value="pho">Pho</option>
-                    <option value="banhmi">Banh Mi</option>
-                    <option value="buncha">Bun Cha / Bowls</option>
-                    <option value="springrolls">Spring Rolls</option>
-                    <option value="drinks">Drinks / Coffee</option>
-                    <option value="desserts">Desserts</option>
+                    {Object.entries(categoryNames || {}).map(([id, langs]) => (
+                      <option key={id} value={id}>
+                        {langs[currentLanguage] || langs['en'] || id}
+                      </option>
+                    ))}
+                    {Array.from(new Set(menuItems.map(item => item.category)))
+                      .filter(cat => !Object.keys(categoryNames || {}).includes(cat))
+                      .map(cat => (
+                        <option key={cat} value={cat}>
+                          {cat.charAt(0).toUpperCase() + cat.slice(1)} (Custom)
+                        </option>
+                      ))
+                    }
+                    <option value="custom">✏️ + Thêm danh mục mới (Tự nhập)...</option>
                   </select>
+                  {dishCategory === 'custom' && (
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ví dụ: comtam, snacks,..."
+                      value={customCategory}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                      className="w-full rounded-lg border border-emerald-500 px-3 py-2 bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500 text-xs font-semibold placeholder:font-normal placeholder:text-gray-400"
+                    />
+                  )}
                 </div>
 
                 {/* Availability */}
@@ -705,7 +1039,9 @@ export default function AdminPanel({
                         {currentLanguage === 'vi' ? item.nameVi : currentLanguage === 'tl' ? item.nameTl : item.nameEn}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 font-mono font-bold text-emerald-800">₱{item.price}</td>
-                      <td className="whitespace-nowrap px-6 py-4 uppercase font-bold text-[10px] text-gray-400">{item.category}</td>
+                      <td className="whitespace-nowrap px-6 py-4 uppercase font-bold text-[10px] text-gray-400">
+                        {categoryNames?.[item.category]?.[currentLanguage] || categoryNames?.[item.category]?.['en'] || item.category}
+                      </td>
                       <td className="whitespace-nowrap px-6 py-4">
                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${item.isAvailable ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
                           {item.isAvailable ? 'In Stock' : 'Sold Out'}
