@@ -1,0 +1,6 @@
+{
+  "name": "Viet Bistro PH",
+  "description": "Authentic Vietnamese Culinary experience based in the Philippines, featuring detailed digital menu with online ordering, GCash/Card payments, interactive Manila directions, 24/7 AI-powered support, customer reviews, and a full CMS dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
