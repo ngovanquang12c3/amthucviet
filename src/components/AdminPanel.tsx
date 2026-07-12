@@ -39,13 +39,20 @@ export default function AdminPanel({
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
     return sessionStorage.getItem('vb_admin_logged') === 'true';
   });
+  const [adminUsername, setAdminUsername] = useState(() => {
+    return localStorage.getItem('vb_admin_username') || 'admin';
+  });
+  const [adminPassword, setAdminPassword] = useState(() => {
+    return localStorage.getItem('vb_admin_password') || 'admin123';
+  });
+
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginUsername.trim() === 'admin' && loginPassword === 'admin123') {
+    if (loginUsername.trim() === adminUsername && loginPassword === adminPassword) {
       setIsAdminLoggedIn(true);
       sessionStorage.setItem('vb_admin_logged', 'true');
       setLoginError('');
@@ -69,6 +76,13 @@ export default function AdminPanel({
   const [storeWeekdaysInput, setStoreWeekdaysInput] = useState(storeSettings?.storeWeekdays || '');
   const [storeWeekendsInput, setStoreWeekendsInput] = useState(storeSettings?.storeWeekends || '');
   const [settingsSavedAlert, setSettingsSavedAlert] = useState(false);
+
+  // Admin credentials modification states
+  const [newAdminUsernameInput, setNewAdminUsernameInput] = useState(adminUsername);
+  const [newAdminPasswordInput, setNewAdminPasswordInput] = useState(adminPassword);
+  const [confirmAdminPasswordInput, setConfirmAdminPasswordInput] = useState(adminPassword);
+  const [credentialsError, setCredentialsError] = useState('');
+  const [credentialsSuccessAlert, setCredentialsSuccessAlert] = useState(false);
 
   // Sync inputs if props change
   React.useEffect(() => {
@@ -455,11 +469,11 @@ export default function AdminPanel({
           <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-[11px] text-amber-800 space-y-1">
             <p className="font-bold flex items-center gap-1">
               <span>💡</span>
-              <span>{currentLanguage === 'vi' ? 'Tài khoản dùng thử:' : 'Demo Credentials:'}</span>
+              <span>{currentLanguage === 'vi' ? 'Tài khoản hiện tại:' : 'Current Credentials:'}</span>
             </p>
             <div className="font-mono text-[10px] pl-4 space-y-0.5">
-              <p>Username: <strong className="text-amber-900 bg-amber-100 px-1 py-0.5 rounded">admin</strong></p>
-              <p>Password: <strong className="text-amber-900 bg-amber-100 px-1 py-0.5 rounded">admin123</strong></p>
+              <p>Username: <strong className="text-amber-900 bg-amber-100 px-1 py-0.5 rounded">{adminUsername}</strong></p>
+              <p>Password: <strong className="text-amber-900 bg-amber-100 px-1 py-0.5 rounded">{adminPassword}</strong></p>
             </div>
           </div>
         </div>
@@ -1445,6 +1459,116 @@ export default function AdminPanel({
                   </button>
                 </div>
 
+              </form>
+
+              {/* Change Admin Password / Account Form */}
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (!newAdminUsernameInput.trim() || !newAdminPasswordInput.trim()) {
+                  setCredentialsError(currentLanguage === 'vi' ? 'Vui lòng điền đầy đủ thông tin!' : 'Please fill out all fields!');
+                  return;
+                }
+                if (newAdminPasswordInput !== confirmAdminPasswordInput) {
+                  setCredentialsError(currentLanguage === 'vi' ? 'Mật khẩu mới và xác nhận mật khẩu không khớp!' : 'New password and confirm password do not match!');
+                  return;
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('vb_admin_username', newAdminUsernameInput.trim());
+                localStorage.setItem('vb_admin_password', newAdminPasswordInput);
+                
+                // Update local states
+                setAdminUsername(newAdminUsernameInput.trim());
+                setAdminPassword(newAdminPasswordInput);
+                
+                setCredentialsError('');
+                setCredentialsSuccessAlert(true);
+                setTimeout(() => setCredentialsSuccessAlert(false), 3000);
+              }} className="bg-white border border-gray-100 p-6 rounded-2xl shadow-3xs space-y-5">
+                
+                <div>
+                  <h4 className="font-sans font-bold text-sm text-gray-800 flex items-center gap-1.5">
+                    <span>🔐</span>
+                    <span>{currentLanguage === 'vi' ? 'Tài khoản & Bảo mật quản trị' : 'Admin Account & Security'}</span>
+                  </h4>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    {currentLanguage === 'vi' 
+                      ? 'Thay đổi tên đăng nhập và mật khẩu truy cập hệ thống quản lý.' 
+                      : 'Change the username and password to access the CMS panel.'}
+                  </p>
+                </div>
+
+                {credentialsError && (
+                  <div className="bg-rose-50 border border-rose-200 text-rose-800 p-3.5 rounded-xl flex items-center gap-2 text-xs font-semibold">
+                    <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />
+                    <span>{credentialsError}</span>
+                  </div>
+                )}
+
+                {credentialsSuccessAlert && (
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3.5 rounded-xl flex items-center gap-2 text-xs font-semibold">
+                    <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <span>
+                      {currentLanguage === 'vi'
+                        ? '🎉 Đổi tài khoản quản trị thành công! Hãy ghi nhớ thông tin mới.'
+                        : '🎉 Admin credentials updated successfully! Please remember the new login details.'}
+                    </span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Username field */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-700 block">
+                      {currentLanguage === 'vi' ? '👤 Tên đăng nhập mới' : '👤 New Username'}
+                    </label>
+                    <input
+                      type="text"
+                      value={newAdminUsernameInput}
+                      onChange={(e) => setNewAdminUsernameInput(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs focus:outline-none focus:border-emerald-500 font-semibold text-gray-900"
+                      required
+                    />
+                  </div>
+
+                  {/* Password field */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-700 block">
+                      {currentLanguage === 'vi' ? '🔑 Mật khẩu mới' : '🔑 New Password'}
+                    </label>
+                    <input
+                      type="password"
+                      value={newAdminPasswordInput}
+                      onChange={(e) => setNewAdminPasswordInput(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs focus:outline-none focus:border-emerald-500 font-semibold text-gray-900"
+                      required
+                    />
+                  </div>
+
+                  {/* Confirm password field */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-700 block">
+                      {currentLanguage === 'vi' ? '🔄 Xác nhận mật khẩu mới' : '🔄 Confirm New Password'}
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmAdminPasswordInput}
+                      onChange={(e) => setConfirmAdminPasswordInput(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs focus:outline-none focus:border-emerald-500 font-semibold text-gray-900"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-3 border-t border-gray-100">
+                  <button
+                    type="submit"
+                    className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-6 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-3xs cursor-pointer"
+                  >
+                    <Check className="h-4 w-4" />
+                    <span>{currentLanguage === 'vi' ? 'Cập Nhật Tài Khoản' : 'Update Credentials'}</span>
+                  </button>
+                </div>
               </form>
             </div>
 
