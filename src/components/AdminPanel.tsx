@@ -66,7 +66,7 @@ export default function AdminPanel({
     sessionStorage.removeItem('vb_admin_logged');
   };
 
-  const [activeTab, setActiveTab] = useState<'stats' | 'orders' | 'menu' | 'reviews' | 'settings'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'orders' | 'menu' | 'settings'>('stats');
   
   // Store Settings States
   const [storeNameInput, setStoreNameInput] = useState(storeSettings?.storeName || '');
@@ -464,18 +464,6 @@ export default function AdminPanel({
               {currentLanguage === 'vi' ? 'Đăng Nhập Quản Trị' : 'Access Admin CMS'}
             </button>
           </form>
-
-          {/* Quick Demo Credentials Box */}
-          <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-[11px] text-amber-800 space-y-1">
-            <p className="font-bold flex items-center gap-1">
-              <span>💡</span>
-              <span>{currentLanguage === 'vi' ? 'Tài khoản hiện tại:' : 'Current Credentials:'}</span>
-            </p>
-            <div className="font-mono text-[10px] pl-4 space-y-0.5">
-              <p>Username: <strong className="text-amber-900 bg-amber-100 px-1 py-0.5 rounded">{adminUsername}</strong></p>
-              <p>Password: <strong className="text-amber-900 bg-amber-100 px-1 py-0.5 rounded">{adminPassword}</strong></p>
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -517,12 +505,6 @@ export default function AdminPanel({
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === 'menu' ? 'bg-white text-gray-900 shadow-2xs' : 'text-gray-600 hover:text-gray-900'}`}
           >
             🍳 Culinary Menu CMS
-          </button>
-          <button
-            onClick={() => setActiveTab('reviews')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === 'reviews' ? 'bg-white text-gray-900 shadow-2xs' : 'text-gray-600 hover:text-gray-900'}`}
-          >
-            💬 Review Moderation
           </button>
           <button
             onClick={() => setActiveTab('settings')}
@@ -1240,80 +1222,6 @@ export default function AdminPanel({
         </div>
       )}
 
-      {/* Reviews Moderator Queue Tab */}
-      {activeTab === 'reviews' && (
-        <div className="space-y-6 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-            <h3 className="font-sans font-bold text-base text-gray-800">{dict.pendingReviews}</h3>
-            <span className="text-xs text-gray-400">Total feedbacks logged: {reviews.length}</span>
-          </div>
-
-          <div className="space-y-4">
-            {reviews.map((rev) => (
-              <div
-                key={rev.id}
-                className="bg-white border border-gray-200 p-5 rounded-2xl space-y-4 shadow-3xs"
-              >
-                <div className="flex justify-between items-start gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-gray-900">{rev.author}</span>
-                      <span className="text-[9px] text-gray-400 font-mono">{rev.date}</span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">"{rev.comment}"</p>
-                  </div>
-
-                  <span className="font-mono font-bold text-amber-500">★ {rev.rating}</span>
-                </div>
-
-                {/* Owner Reply Block */}
-                {rev.reply ? (
-                  <div className="bg-emerald-50/50 rounded-xl p-3 border border-emerald-100 text-[11px] text-emerald-800 leading-relaxed italic">
-                    <strong>My Response:</strong> "{rev.reply}"
-                  </div>
-                ) : activeReviewId === rev.id ? (
-                  <div className="space-y-2">
-                    <textarea
-                      rows={2}
-                      value={ownerReplyText}
-                      onChange={(e) => setOwnerReplyText(e.target.value)}
-                      placeholder={dict.writeReplyPlaceholder}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:outline-none"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handlePublishReply(rev.id)}
-                        className="rounded-lg bg-emerald-600 text-white font-bold text-[10px] px-3.5 py-1.5 cursor-pointer hover:bg-emerald-700"
-                      >
-                        {dict.sendReply}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setActiveReviewId(null);
-                          setOwnerReplyText('');
-                        }}
-                        className="rounded-lg border border-gray-200 bg-white text-gray-500 text-[10px] px-3.5 py-1.5 cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setActiveReviewId(rev.id);
-                      setOwnerReplyText('');
-                    }}
-                    className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 cursor-pointer"
-                  >
-                    <span>💬 {dict.replyToReview}</span>
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Settings Tab */}
       {activeTab === 'settings' && (
