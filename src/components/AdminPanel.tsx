@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Cell } from 'recharts';
-import { DollarSign, ShoppingCart, MessageSquare, Plus, Edit3, Check, Trash2, AlertTriangle, Play, CheckCircle, XCircle } from 'lucide-react';
+import { DollarSign, ShoppingCart, MessageSquare, Plus, Edit3, Check, Trash2, AlertTriangle, Play, CheckCircle, XCircle, Lock, User, LogOut } from 'lucide-react';
 import { MenuItem, Order, Review, Language, Dictionary } from '../types';
 
 interface AdminPanelProps {
@@ -32,6 +32,29 @@ export default function AdminPanel({
   bannerImages = [],
   onUpdateBannerImages
 }: AdminPanelProps) {
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
+    return sessionStorage.getItem('vb_admin_logged') === 'true';
+  });
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loginUsername.trim() === 'admin' && loginPassword === 'admin123') {
+      setIsAdminLoggedIn(true);
+      sessionStorage.setItem('vb_admin_logged', 'true');
+      setLoginError('');
+    } else {
+      setLoginError(currentLanguage === 'vi' ? 'Sai tài khoản hoặc mật khẩu quản trị!' : 'Invalid admin username or password!');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAdminLoggedIn(false);
+    sessionStorage.removeItem('vb_admin_logged');
+  };
+
   const [activeTab, setActiveTab] = useState<'stats' | 'orders' | 'menu' | 'reviews'>('stats');
   
   // Category management temp state
@@ -331,11 +354,99 @@ export default function AdminPanel({
     onUpdateMenu(updated);
   };
 
+  if (!isAdminLoggedIn) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 sm:px-6">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg space-y-6 animate-in fade-in duration-300">
+          <div className="text-center space-y-2">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 mb-2">
+              <Lock className="h-5 w-5" />
+            </div>
+            <h2 className="font-sans font-bold text-xl tracking-tight text-gray-900">
+              {currentLanguage === 'vi' ? 'Hệ Thống Quản Trị CMS' : 'Admin CMS Portal'}
+            </h2>
+            <p className="text-xs text-gray-500 font-medium">
+              {currentLanguage === 'vi' 
+                ? 'Đăng nhập để quản lý thực đơn, đơn hàng và hình ảnh trang chủ' 
+                : 'Log in to manage menu items, kitchen orders, and homepage banners'}
+            </p>
+          </div>
+
+          {loginError && (
+            <div className="bg-rose-50 border border-rose-100 text-rose-800 text-xs font-semibold p-3.5 rounded-xl flex items-center gap-2.5">
+              <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0" />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
+                {currentLanguage === 'vi' ? 'Tên đăng nhập' : 'Username'}
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
+                  <User className="h-4 w-4" />
+                </span>
+                <input
+                  type="text"
+                  required
+                  placeholder="admin"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 font-semibold text-gray-800"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
+                {currentLanguage === 'vi' ? 'Mật khẩu' : 'Password'}
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
+                  <Lock className="h-4 w-4" />
+                </span>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 font-semibold text-gray-800"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3.5 rounded-xl transition-all shadow-xs cursor-pointer transform active:scale-[0.98]"
+            >
+              {currentLanguage === 'vi' ? 'Đăng Nhập Quản Trị' : 'Access Admin CMS'}
+            </button>
+          </form>
+
+          {/* Quick Demo Credentials Box */}
+          <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-[11px] text-amber-800 space-y-1">
+            <p className="font-bold flex items-center gap-1">
+              <span>💡</span>
+              <span>{currentLanguage === 'vi' ? 'Tài khoản dùng thử:' : 'Demo Credentials:'}</span>
+            </p>
+            <div className="font-mono text-[10px] pl-4 space-y-0.5">
+              <p>Username: <strong className="text-amber-900 bg-amber-100 px-1 py-0.5 rounded">admin</strong></p>
+              <p>Password: <strong className="text-amber-900 bg-amber-100 px-1 py-0.5 rounded">admin123</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 bg-gray-50 border-t border-gray-100 min-h-[80vh]">
       
       {/* Title Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-gray-200 mb-8 gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-6 border-b border-gray-200 mb-8 gap-4">
         <div>
           <h2 className="font-sans font-bold text-2xl tracking-tight text-gray-900 flex items-center gap-2">
             <span>🛡️ {dict.adminDashboard}</span>
@@ -344,7 +455,7 @@ export default function AdminPanel({
         </div>
 
         {/* CMS Sub-Navigation Tabs */}
-        <div className="flex gap-1.5 overflow-x-auto bg-gray-200/60 p-1 rounded-xl">
+        <div className="flex flex-wrap gap-1.5 bg-gray-200/60 p-1 rounded-xl">
           <button
             onClick={() => setActiveTab('stats')}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === 'stats' ? 'bg-white text-gray-900 shadow-2xs' : 'text-gray-600 hover:text-gray-900'}`}
@@ -373,6 +484,17 @@ export default function AdminPanel({
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === 'reviews' ? 'bg-white text-gray-900 shadow-2xs' : 'text-gray-600 hover:text-gray-900'}`}
           >
             💬 Review Moderation
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 px-3.5 py-2 rounded-xl text-xs font-bold border border-rose-100 transition-colors cursor-pointer shadow-3xs"
+            title={currentLanguage === 'vi' ? 'Đăng xuất tài khoản quản trị' : 'Sign out of Admin Session'}
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            <span>{currentLanguage === 'vi' ? 'Đăng Xuất' : 'Sign Out'}</span>
           </button>
         </div>
       </div>
