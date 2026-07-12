@@ -1,13 +1,25 @@
 import React, { useState } from 'react';
-import { MapPin, Navigation, Clock, CreditCard, Info } from 'lucide-react';
-import { Dictionary } from '../types';
+import { MapPin, Navigation, Clock, CreditCard, Info, ExternalLink, Map } from 'lucide-react';
+import { Dictionary, StoreSettings } from '../types';
 
 interface MapSectionProps {
   dict: Dictionary;
+  storeSettings?: StoreSettings;
 }
 
-export default function MapSection({ dict }: MapSectionProps) {
+const defaultSettings: StoreSettings = {
+  storeName: "Viet Bistro Kitchen BGC",
+  storeAddress: "Unit G-12, Ground Floor, Bonifacio High Street, 30th St, BGC, Taguig City, Metro Manila",
+  googleMapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3861.970146014251!2d121.0478631!3d14.5522513!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c8f13bb1ef6b%3A0xe1084ef75f28a9b2!2sBonifacio%20High%20Street!5e0!3m2!1sen!2sph!4v1700000000000",
+  googleMapsUrl: "https://maps.google.com/?q=Bonifacio+High+Street",
+  storeWeekdays: "Monday - Friday: 10:00 AM - 10:00 PM",
+  storeWeekends: "Saturday - Sunday: 09:00 AM - 11:00 PM"
+};
+
+export default function MapSection({ dict, storeSettings }: MapSectionProps) {
+  const settings = storeSettings || defaultSettings;
   const [selectedDistrict, setSelectedDistrict] = useState('makati');
+  const [mapType, setMapType] = useState<'google' | 'vector'>('google');
 
   // Districts coordinates relative to BGC (placed at center x=160, y=140)
   const districts: Record<string, {
@@ -163,119 +175,174 @@ export default function MapSection({ dict }: MapSectionProps) {
 
         {/* Visual Map Canvas Columns */}
         <div className="lg:col-span-7 flex flex-col justify-between bg-white p-6 rounded-2xl border border-gray-100 shadow-xs">
+          
           {/* Map canvas space */}
-          <div className="relative flex-1 bg-slate-900 rounded-xl overflow-hidden min-h-[300px] border border-slate-800 shadow-inner flex flex-col justify-between p-4">
+          <div className="relative flex-1 bg-slate-900 rounded-xl overflow-hidden min-h-[350px] border border-slate-800 shadow-inner flex flex-col justify-between p-4">
             
-            {/* Top Bar with address info */}
-            <div className="flex justify-between items-center bg-slate-900/90 backdrop-blur-xs p-2 rounded-lg border border-slate-800 z-10">
+            {/* Top Bar with address info and Tab Switcher */}
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-slate-900/90 backdrop-blur-xs p-2.5 rounded-lg border border-slate-800 z-10 gap-2 mb-2">
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-slate-300">Viet Bistro Kitchen (HQ)</span>
+                <span className="text-[10px] font-bold text-slate-300">{settings.storeName}</span>
               </div>
-              <span className="text-[9px] text-slate-400 italic">BGC High Street</span>
+              
+              {/* Map Type Tab Switcher */}
+              <div className="flex gap-1 bg-slate-800 p-0.5 rounded-lg border border-slate-700/50">
+                <button
+                  type="button"
+                  onClick={() => setMapType('google')}
+                  className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                    mapType === 'google'
+                      ? 'bg-emerald-600 text-white shadow-2xs'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  🗺️ Google Map
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMapType('vector')}
+                  className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                    mapType === 'vector'
+                      ? 'bg-emerald-600 text-white shadow-2xs'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  🛵 {dict.operatingIn ? dict.operatingIn.split(" ")[0] : 'Delivery'}
+                </button>
+              </div>
+
+              {/* Direct Open Link */}
+              <a
+                href={settings.googleMapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1 bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/30 text-emerald-400 hover:text-white px-3 py-1 rounded-lg text-[10px] font-bold transition-all shadow-sm shrink-0"
+              >
+                <span>{dict.location === 'Vị trí & Giao hàng' ? 'Mở Google Maps' : 'Open in Google Maps'}</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
 
             {/* Simulated Vector Grid SVG Map */}
-            <div className="absolute inset-0">
-              <svg className="w-full h-full opacity-90" viewBox="0 0 320 220" preserveAspectRatio="none">
-                {/* Cyber grid lines */}
-                <defs>
-                  <pattern id="mapGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e293b" strokeWidth="0.5" />
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#mapGrid)" />
+            {mapType === 'vector' ? (
+              <>
+                <div className="absolute inset-0 pt-16 pb-12">
+                  <svg className="w-full h-full opacity-90" viewBox="0 0 320 220" preserveAspectRatio="none">
+                    {/* Cyber grid lines */}
+                    <defs>
+                      <pattern id="mapGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e293b" strokeWidth="0.5" />
+                      </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#mapGrid)" />
 
-                {/* Major Highway (EDSA / C5 representation) */}
-                {/* C5 Road Vector line */}
-                <path d="M 170 10 L 165 90 L 160 140 L 195 210" fill="none" stroke="#334155" strokeWidth="3" strokeLinecap="round" />
-                {/* EDSA Highway Representation */}
-                <path d="M 50 20 L 80 80 L 115 130 L 140 180 L 220 210" fill="none" stroke="#1e293b" strokeWidth="5" strokeLinecap="round" />
-                <path d="M 50 20 L 80 80 L 115 130 L 140 180 L 220 210" fill="none" stroke="#cbd5e1" strokeWidth="1" strokeLinecap="round" strokeDasharray="3,3" />
+                    {/* Major Highway (EDSA / C5 representation) */}
+                    {/* C5 Road Vector line */}
+                    <path d="M 170 10 L 165 90 L 160 140 L 195 210" fill="none" stroke="#334155" strokeWidth="3" strokeLinecap="round" />
+                    {/* EDSA Highway Representation */}
+                    <path d="M 50 20 L 80 80 L 115 130 L 140 180 L 220 210" fill="none" stroke="#1e293b" strokeWidth="5" strokeLinecap="round" />
+                    <path d="M 50 20 L 80 80 L 115 130 L 140 180 L 220 210" fill="none" stroke="#cbd5e1" strokeWidth="1" strokeLinecap="round" strokeDasharray="3,3" />
 
-                {/* District Road Connections */}
-                {/* BGC - Makati route */}
-                <path d="M 160 140 Q 135 130 110 125" fill="none" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" />
-                {/* BGC - Pasay route */}
-                <path d="M 160 140 Q 110 160 75 180" fill="none" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" />
-                {/* BGC - QC route */}
-                <path d="M 160 140 Q 170 90 180 40" fill="none" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" />
+                    {/* District Road Connections */}
+                    {/* BGC - Makati route */}
+                    <path d="M 160 140 Q 135 130 110 125" fill="none" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" />
+                    {/* BGC - Pasay route */}
+                    <path d="M 160 140 Q 110 160 75 180" fill="none" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" />
+                    {/* BGC - QC route */}
+                    <path d="M 160 140 Q 170 90 180 40" fill="none" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" />
 
-                {/* Active vector tracking path */}
-                {selectedDistrict && (
-                  <path
-                    d={
-                      selectedDistrict === 'bgc' ? "M 160 140 L 170 135" :
-                      selectedDistrict === 'makati' ? "M 160 140 Q 135 130 110 125" :
-                      selectedDistrict === 'pasay' ? "M 160 140 Q 110 160 75 180" :
-                      "M 160 140 Q 170 90 180 40"
-                    }
-                    fill="none"
-                    stroke="#10b981"
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    className="animate-[dash_3s_linear_infinite]"
-                    strokeDasharray="6,6"
-                  />
-                )}
+                    {/* Active vector tracking path */}
+                    {selectedDistrict && (
+                      <path
+                        d={
+                          selectedDistrict === 'bgc' ? "M 160 140 L 170 135" :
+                          selectedDistrict === 'makati' ? "M 160 140 Q 135 130 110 125" :
+                          selectedDistrict === 'pasay' ? "M 160 140 Q 110 160 75 180" :
+                          "M 160 140 Q 170 90 180 40"
+                        }
+                        fill="none"
+                        stroke="#10b981"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        className="animate-[dash_3s_linear_infinite]"
+                        strokeDasharray="6,6"
+                      />
+                    )}
 
-                {/* Grid Labels */}
-                <text x="30" y="30" fill="#475569" fontSize="7" fontWeight="bold">MANILA BAY</text>
-                <text x="230" y="80" fill="#475569" fontSize="7" fontWeight="bold">LAGUNA LAKE</text>
+                    {/* Grid Labels */}
+                    <text x="30" y="30" fill="#475569" fontSize="7" fontWeight="bold">MANILA BAY</text>
+                    <text x="230" y="80" fill="#475569" fontSize="7" fontWeight="bold">LAGUNA LAKE</text>
 
-                {/* HQ Marker */}
-                <g transform={`translate(${bgcBranch.x}, ${bgcBranch.y})`}>
-                  <circle r="8" fill="#10b981" fillOpacity="0.3" className="animate-ping" />
-                  <circle r="4.5" fill="#10b981" stroke="#ffffff" strokeWidth="1.5" />
-                </g>
-
-                {/* District Markers */}
-                {Object.keys(districts).map((key) => {
-                  const dist = districts[key];
-                  const isActive = selectedDistrict === key;
-                  return (
-                    <g key={key} transform={`translate(${dist.x}, ${dist.y})`} className="cursor-pointer" onClick={() => setSelectedDistrict(key)}>
-                      <circle r={isActive ? "7" : "4"} fill={isActive ? "#f59e0b" : "#475569"} stroke="#ffffff" strokeWidth="1" />
-                      <text
-                        x="9"
-                        y="3"
-                        fill={isActive ? "#fbbf24" : "#94a3b8"}
-                        fontSize="8"
-                        fontWeight={isActive ? "extrabold" : "bold"}
-                        className="pointer-events-none select-none bg-slate-900"
-                      >
-                        {dist.name.split(" ")[0]}
-                      </text>
+                    {/* HQ Marker */}
+                    <g transform={`translate(${bgcBranch.x}, ${bgcBranch.y})`}>
+                      <circle r="8" fill="#10b981" fillOpacity="0.3" className="animate-ping" />
+                      <circle r="4.5" fill="#10b981" stroke="#ffffff" strokeWidth="1.5" />
                     </g>
-                  );
-                })}
-              </svg>
-            </div>
 
-            {/* Empty space filler for SVG layer */}
-            <div className="h-44" />
+                    {/* District Markers */}
+                    {Object.keys(districts).map((key) => {
+                      const dist = districts[key];
+                      const isActive = selectedDistrict === key;
+                      return (
+                        <g key={key} transform={`translate(${dist.x}, ${dist.y})`} className="cursor-pointer" onClick={() => setSelectedDistrict(key)}>
+                          <circle r={isActive ? "7" : "4"} fill={isActive ? "#f59e0b" : "#475569"} stroke="#ffffff" strokeWidth="1" />
+                          <text
+                            x="9"
+                            y="3"
+                            fill={isActive ? "#fbbf24" : "#94a3b8"}
+                            fontSize="8"
+                            fontWeight={isActive ? "extrabold" : "bold"}
+                            className="pointer-events-none select-none bg-slate-900"
+                          >
+                            {dist.name.split(" ")[0]}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                </div>
 
-            {/* Map bottom stats */}
-            <div className="bg-slate-900/90 backdrop-blur-xs p-3 rounded-lg border border-slate-800 mt-auto z-10 flex justify-between items-center text-xs">
-              <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
-                <MapPin className="h-4 w-4 text-emerald-400" />
-                <span>Selected Destination:</span>
-                <span className="text-amber-400">{active.name}</span>
+                {/* Empty space filler for SVG layer */}
+                <div className="h-44" />
+
+                {/* Map bottom stats */}
+                <div className="bg-slate-900/90 backdrop-blur-xs p-3 rounded-lg border border-slate-800 mt-auto z-10 flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                    <MapPin className="h-4 w-4 text-emerald-400" />
+                    <span>Selected Destination:</span>
+                    <span className="text-amber-400">{active.name}</span>
+                  </div>
+                  <span className="text-[10px] text-emerald-400 font-mono font-bold uppercase tracking-wider">{active.distance} km away</span>
+                </div>
+              </>
+            ) : (
+              <div className="absolute inset-0 w-full h-full pt-16 z-0 rounded-xl overflow-hidden">
+                <iframe
+                  title="Google Maps"
+                  src={settings.googleMapsEmbedUrl}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen={true}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="w-full h-full"
+                ></iframe>
               </div>
-              <span className="text-[10px] text-emerald-400 font-mono font-bold uppercase tracking-wider">{active.distance} km away</span>
-            </div>
+            )}
           </div>
 
           {/* Location details card */}
           <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div className="space-y-1 bg-gray-50 p-3 rounded-xl border border-gray-100">
-              <span className="font-bold text-gray-700 block">🏠 Kitchen HQ Address</span>
-              <p className="text-gray-500 leading-relaxed text-[11px]">{dict.ourAddress}</p>
+              <span className="font-bold text-gray-700 block">🏠 {dict.location === 'Vị trí & Giao hàng' ? 'Địa chỉ bếp chính' : 'Kitchen HQ Address'}</span>
+              <p className="text-gray-500 leading-relaxed text-[11px] font-semibold">{settings.storeAddress}</p>
             </div>
             <div className="space-y-1 bg-gray-50 p-3 rounded-xl border border-gray-100">
-              <span className="font-bold text-gray-700 block">⏰ Operating Hours</span>
-              <p className="text-[11px] text-gray-500">{dict.weekdays}</p>
-              <p className="text-[11px] text-gray-500">{dict.weekends}</p>
+              <span className="font-bold text-gray-700 block">⏰ {dict.location === 'Vị trí & Giao hàng' ? 'Giờ hoạt động' : 'Operating Hours'}</span>
+              <p className="text-[11px] text-gray-500 font-semibold">{settings.storeWeekdays}</p>
+              <p className="text-[11px] text-gray-500 font-semibold">{settings.storeWeekends}</p>
             </div>
           </div>
 

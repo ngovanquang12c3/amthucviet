@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { translations } from './data/translations';
 import { initialMenuItems } from './data/menu';
-import { Language, MenuItem, CartItem, Review, Order } from './types';
+import { Language, MenuItem, CartItem, Review, Order, StoreSettings } from './types';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
 import MenuSection from './components/MenuSection';
@@ -119,6 +119,19 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>(() => {
+    const local = localStorage.getItem('vb_store_settings');
+    if (local) return JSON.parse(local);
+    return {
+      storeName: "Viet Bistro Kitchen BGC",
+      storeAddress: "Unit G-12, Ground Floor, Bonifacio High Street, 30th St, BGC, Taguig City, Metro Manila",
+      googleMapsEmbedUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3861.970146014251!2d121.0478631!3d14.5522513!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c8f13bb1ef6b%3A0xe1084ef75f28a9b2!2sBonifacio%20High%20Street!5e0!3m2!1sen!2sph!4v1700000000000",
+      googleMapsUrl: "https://maps.google.com/?q=Bonifacio+High+Street",
+      storeWeekdays: "Monday - Friday: 10:00 AM - 10:00 PM",
+      storeWeekends: "Saturday - Sunday: 09:00 AM - 11:00 PM"
+    };
+  });
+
   // Core Data Persistent states
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
     const local = localStorage.getItem('vb_menu');
@@ -200,6 +213,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('vb_banner_images', JSON.stringify(bannerImages));
   }, [bannerImages]);
+
+  useEffect(() => {
+    localStorage.setItem('vb_store_settings', JSON.stringify(storeSettings));
+  }, [storeSettings]);
 
   const dict = translations[language];
 
@@ -322,6 +339,8 @@ export default function App() {
             onUpdateCategoryNames={setCategoryNames}
             bannerImages={bannerImages}
             onUpdateBannerImages={setBannerImages}
+            storeSettings={storeSettings}
+            onUpdateStoreSettings={setStoreSettings}
           />
         ) : (
           /* Normal User Portal */
@@ -340,7 +359,7 @@ export default function App() {
                   onAddToCart={handleAddToCart}
                   categoryNames={categoryNames}
                 />
-                <MapSection dict={dict} />
+                <MapSection dict={dict} storeSettings={storeSettings} />
               </>
             )}
 

@@ -194,3 +194,12 @@ export interface Dictionary {
   privacyDetails: string;
   agreeTerms: string;
 }
+
+export interface StoreSettings {
+  storeName: string;
+  storeAddress: string;
+  googleMapsEmbedUrl: string;
+  googleMapsUrl: string;
+  storeWeekdays: string;
+  storeWeekends: string;
+}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Cell } from 'recharts';
-import { DollarSign, ShoppingCart, MessageSquare, Plus, Edit3, Check, Trash2, AlertTriangle, Play, CheckCircle, XCircle, Lock, User, LogOut } from 'lucide-react';
-import { MenuItem, Order, Review, Language, Dictionary } from '../types';
+import { DollarSign, ShoppingCart, MessageSquare, Plus, Edit3, Check, Trash2, AlertTriangle, Play, CheckCircle, XCircle, Lock, User, LogOut, Settings, MapPin, Info } from 'lucide-react';
+import { MenuItem, Order, Review, Language, Dictionary, StoreSettings } from '../types';
 
 interface AdminPanelProps {
   menuItems: MenuItem[];
@@ -16,6 +16,8 @@ interface AdminPanelProps {
   onUpdateCategoryNames?: (updated: Record<string, { en: string; vi: string; tl: string }>) => void;
   bannerImages?: string[];
   onUpdateBannerImages?: (updated: string[]) => void;
+  storeSettings?: StoreSettings;
+  onUpdateStoreSettings?: (updated: StoreSettings) => void;
 }
 
 export default function AdminPanel({
@@ -30,7 +32,9 @@ export default function AdminPanel({
   categoryNames,
   onUpdateCategoryNames,
   bannerImages = [],
-  onUpdateBannerImages
+  onUpdateBannerImages,
+  storeSettings,
+  onUpdateStoreSettings
 }: AdminPanelProps) {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
     return sessionStorage.getItem('vb_admin_logged') === 'true';
@@ -55,8 +59,29 @@ export default function AdminPanel({
     sessionStorage.removeItem('vb_admin_logged');
   };
 
-  const [activeTab, setActiveTab] = useState<'stats' | 'orders' | 'menu' | 'reviews'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'orders' | 'menu' | 'reviews' | 'settings'>('stats');
   
+  // Store Settings States
+  const [storeNameInput, setStoreNameInput] = useState(storeSettings?.storeName || '');
+  const [storeAddressInput, setStoreAddressInput] = useState(storeSettings?.storeAddress || '');
+  const [googleMapsEmbedUrlInput, setGoogleMapsEmbedUrlInput] = useState(storeSettings?.googleMapsEmbedUrl || '');
+  const [googleMapsUrlInput, setGoogleMapsUrlInput] = useState(storeSettings?.googleMapsUrl || '');
+  const [storeWeekdaysInput, setStoreWeekdaysInput] = useState(storeSettings?.storeWeekdays || '');
+  const [storeWeekendsInput, setStoreWeekendsInput] = useState(storeSettings?.storeWeekends || '');
+  const [settingsSavedAlert, setSettingsSavedAlert] = useState(false);
+
+  // Sync inputs if props change
+  React.useEffect(() => {
+    if (storeSettings) {
+      setStoreNameInput(storeSettings.storeName);
+      setStoreAddressInput(storeSettings.storeAddress);
+      setGoogleMapsEmbedUrlInput(storeSettings.googleMapsEmbedUrl);
+      setGoogleMapsUrlInput(storeSettings.googleMapsUrl);
+      setStoreWeekdaysInput(storeSettings.storeWeekdays);
+      setStoreWeekendsInput(storeSettings.storeWeekends);
+    }
+  }, [storeSettings]);
+
   // Category management temp state
   const [tempCategoryNames, setTempCategoryNames] = useState<Record<string, { en: string; vi: string; tl: string }>>({});
   const [isEditingCategories, setIsEditingCategories] = useState(false);
@@ -484,6 +509,12 @@ export default function AdminPanel({
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === 'reviews' ? 'bg-white text-gray-900 shadow-2xs' : 'text-gray-600 hover:text-gray-900'}`}
           >
             💬 Review Moderation
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === 'settings' ? 'bg-white text-gray-900 shadow-2xs' : 'text-gray-600 hover:text-gray-900'}`}
+          >
+            ⚙️ Settings
           </button>
         </div>
 
@@ -1266,6 +1297,216 @@ export default function AdminPanel({
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+            <div>
+              <h3 className="font-sans font-bold text-base text-gray-800">⚙️ {currentLanguage === 'vi' ? 'Cấu hình chi nhánh & Vị trí' : 'Restaurant & Branch Settings'}</h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {currentLanguage === 'vi' 
+                  ? 'Quản lý thông tin chi nhánh, giờ mở cửa và liên kết Google Maps của nhà hàng.' 
+                  : 'Manage store details, operating hours, and Google Maps integration.'}
+              </p>
+            </div>
+          </div>
+
+          {settingsSavedAlert && (
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl flex items-center gap-2.5 text-xs font-semibold animate-bounce shadow-2xs">
+              <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
+              <span>
+                {currentLanguage === 'vi'
+                  ? '🎉 Đã cập nhật thông tin vị trí và giờ hoạt động thành công!'
+                  : '🎉 Restaurant settings and map location updated successfully!'}
+              </span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Form Column */}
+            <div className="lg:col-span-2 space-y-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (onUpdateStoreSettings) {
+                  onUpdateStoreSettings({
+                    storeName: storeNameInput,
+                    storeAddress: storeAddressInput,
+                    googleMapsEmbedUrl: googleMapsEmbedUrlInput,
+                    googleMapsUrl: googleMapsUrlInput,
+                    storeWeekdays: storeWeekdaysInput,
+                    storeWeekends: storeWeekendsInput
+                  });
+                  setSettingsSavedAlert(true);
+                  setTimeout(() => setSettingsSavedAlert(false), 3000);
+                }
+              }} className="bg-white border border-gray-100 p-6 rounded-2xl shadow-3xs space-y-5">
+                
+                {/* Branch name */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-700 block">
+                    {currentLanguage === 'vi' ? '🏷️ Tên chi nhánh / Cửa hàng' : '🏷️ Branch / Store Name'}
+                  </label>
+                  <input
+                    type="text"
+                    value={storeNameInput}
+                    onChange={(e) => setStoreNameInput(e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs focus:outline-none focus:border-emerald-500 font-semibold text-gray-900"
+                    required
+                  />
+                </div>
+
+                {/* Address */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-700 block">
+                    {currentLanguage === 'vi' ? '🏠 Địa chỉ chi nhánh' : '🏠 Physical Address'}
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={storeAddressInput}
+                    onChange={(e) => setStoreAddressInput(e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs focus:outline-none focus:border-emerald-500 font-semibold text-gray-900"
+                    required
+                  />
+                </div>
+
+                {/* Grid for Google Maps Settings */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Google Maps Embed Link */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-700 block">
+                      {currentLanguage === 'vi' ? '🗺️ Link Nhúng Google Map (Iframe src)' : '🗺️ Google Maps Embed Link (Iframe src)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={googleMapsEmbedUrlInput}
+                      onChange={(e) => setGoogleMapsEmbedUrlInput(e.target.value)}
+                      placeholder="https://www.google.com/maps/embed?pb=..."
+                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs focus:outline-none focus:border-emerald-500 font-mono text-gray-900"
+                      required
+                    />
+                  </div>
+
+                  {/* Google Maps App URL */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-700 block">
+                      {currentLanguage === 'vi' ? '📍 Link Định Vị Google Maps (Direct Link)' : '📍 Google Maps Direct Link (App Link)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={googleMapsUrlInput}
+                      onChange={(e) => setGoogleMapsUrlInput(e.target.value)}
+                      placeholder="https://maps.google.com/?q=..."
+                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs focus:outline-none focus:border-emerald-500 font-mono text-gray-900"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Grid for Operating Hours */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-700 block">
+                      {currentLanguage === 'vi' ? '⏰ Giờ mở cửa ngày thường (Thứ 2 - Thứ 6)' : '⏰ Weekdays Operating Hours'}
+                    </label>
+                    <input
+                      type="text"
+                      value={storeWeekdaysInput}
+                      onChange={(e) => setStoreWeekdaysInput(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs focus:outline-none focus:border-emerald-500 font-semibold text-gray-900"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-700 block">
+                      {currentLanguage === 'vi' ? '🎉 Giờ mở cửa cuối tuần (Thứ 7 - CN)' : '🎉 Weekends Operating Hours'}
+                    </label>
+                    <input
+                      type="text"
+                      value={storeWeekendsInput}
+                      onChange={(e) => setStoreWeekendsInput(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-xs focus:outline-none focus:border-emerald-500 font-semibold text-gray-900"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Submit button */}
+                <div className="flex justify-end pt-3 border-t border-gray-100">
+                  <button
+                    type="submit"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-3xs cursor-pointer"
+                  >
+                    <Check className="h-4 w-4" />
+                    <span>{currentLanguage === 'vi' ? 'Lưu Thiết Lập' : 'Save Restaurant Settings'}</span>
+                  </button>
+                </div>
+
+              </form>
+            </div>
+
+            {/* Tutorial Column / Live Preview */}
+            <div className="space-y-6">
+              
+              {/* How to get Embed link Guide Card */}
+              <div className="bg-slate-900 text-white p-5 rounded-2xl space-y-3 shadow-md border border-slate-800">
+                <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Info className="h-4 w-4" />
+                  <span>{currentLanguage === 'vi' ? 'Hướng dẫn lấy link Google Map' : 'How to get Google Maps Link'}</span>
+                </h4>
+                <ol className="text-[11px] text-slate-300 space-y-2 list-decimal pl-4 leading-relaxed">
+                  <li>{currentLanguage === 'vi' ? 'Truy cập trang google.com/maps' : 'Go to google.com/maps'}</li>
+                  <li>{currentLanguage === 'vi' ? 'Tìm kiếm địa chỉ nhà hàng / chi nhánh của bạn.' : 'Search for your restaurant address.'}</li>
+                  <li>{currentLanguage === 'vi' ? 'Nhấn nút "Chia sẻ" (Share), sau đó chọn tab "Nhúng bản đồ" (Embed Map).' : 'Click "Share" and select the "Embed a map" tab.'}</li>
+                  <li>
+                    {currentLanguage === 'vi' 
+                      ? 'Sao chép giá trị thuộc tính "src" bên trong thẻ iframe.' 
+                      : 'Copy only the value of the "src" attribute from the iframe tag.'}
+                    <br />
+                    <span className="text-[9px] text-slate-400 font-mono block mt-1 bg-slate-950 p-1.5 rounded select-all break-all border border-slate-800">
+                      https://www.google.com/maps/embed?pb=...
+                    </span>
+                  </li>
+                  <li>{currentLanguage === 'vi' ? 'Dán vào trường cấu hình Link nhúng bên trái.' : 'Paste it into the Embed Link field on the left.'}</li>
+                </ol>
+              </div>
+
+              {/* Real-time Map Preview Card */}
+              <div className="bg-white border border-gray-200 rounded-2xl p-4.5 space-y-3.5 shadow-3xs">
+                <h4 className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 text-emerald-500" />
+                  <span>{currentLanguage === 'vi' ? 'Xem trước bản đồ trực tiếp' : 'Live Map Iframe Preview'}</span>
+                </h4>
+                {googleMapsEmbedUrlInput ? (
+                  <div className="w-full h-48 bg-slate-100 rounded-xl overflow-hidden border border-gray-200 relative">
+                    <iframe
+                      title="Google Maps Admin Preview"
+                      src={googleMapsEmbedUrlInput}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen={true}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="w-full h-full"
+                    ></iframe>
+                  </div>
+                ) : (
+                  <div className="w-full h-48 bg-slate-100 rounded-xl border border-dashed border-gray-300 flex items-center justify-center text-xs text-gray-400">
+                    {currentLanguage === 'vi' ? 'Hãy dán link nhúng để xem trước' : 'Paste embed link to preview map'}
+                  </div>
+                )}
+                <div className="text-[10px] text-gray-500 leading-normal">
+                  💡 {currentLanguage === 'vi' 
+                    ? 'Bản đồ này sẽ hiển thị trực tiếp cho khách hàng ở chân trang chủ để định vị và dẫn đường.' 
+                    : 'This map will render in real-time at the homepage footer for customers to navigate.'}
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
       )}
