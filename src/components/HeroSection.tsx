@@ -29,7 +29,7 @@ export default function HeroSection({ dict, onExploreMenu, bannerImages = [] }: 
   };
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-b from-emerald-50/50 via-white to-white pt-10 pb-6 sm:pt-14 sm:pb-8 lg:pt-16 lg:pb-10">
+    <div className="relative overflow-hidden bg-gradient-to-b from-emerald-50/50 via-white to-white pt-10 pb-0 sm:pt-14 sm:pb-0 lg:pt-16 lg:pb-0">
       {/* Decorative background elements */}
       <div className="absolute top-0 right-1/4 -z-10 h-72 w-72 rounded-full bg-emerald-100/40 blur-3xl" />
       <div className="absolute bottom-12 left-1/4 -z-10 h-96 w-96 rounded-full bg-amber-100/30 blur-3xl" />
@@ -136,38 +136,6 @@ export default function HeroSection({ dict, onExploreMenu, bannerImages = [] }: 
         )}
       </div>
 
-      {/* Selling Points bar below the banner */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-3xl mx-auto">
-          <div className="flex items-center gap-3 p-3.5 bg-white border border-gray-100 rounded-2xl shadow-xs">
-            <div className="p-2 bg-emerald-50 rounded-xl">
-              <Leaf className="h-5.5 w-5.5 text-emerald-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-xs text-gray-900">Fresh Herbs</h3>
-              <p className="text-[10px] text-gray-500">Imported daily from premium growers</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-3.5 bg-white border border-gray-100 rounded-2xl shadow-xs">
-            <div className="p-2 bg-amber-50 rounded-xl">
-              <Clock className="h-5.5 w-5.5 text-amber-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-xs text-gray-900">24H Broth</h3>
-              <p className="text-[10px] text-gray-500">Slow cooked with authentic Vietnamese spices</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-3.5 bg-white border border-gray-100 rounded-2xl shadow-xs">
-            <div className="p-2 bg-emerald-50 rounded-xl">
-              <MapPin className="h-5.5 w-5.5 text-emerald-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-xs text-gray-900">BGC High St</h3>
-              <p className="text-[10px] text-gray-500">Visit our physical store in Taguig city</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
